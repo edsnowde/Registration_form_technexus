@@ -8,43 +8,82 @@ export default function RegisterPage() {
   const [certAttempted, setCertAttempted] = useState("No");
   const [cloudExposure, setCloudExposure] = useState("No");
   const [sponsor, setSponsor] = useState("No");
+  const [submitting, setSubmitting] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMsg(null);
+    setSubmitting(true);
+
+    const fd = new FormData(e.currentTarget);
+    const body: Record<string, any> = Object.fromEntries(fd.entries());
+
+    // Derive booleans that were expressed as Yes/No or checkboxes
+    const ck = (name: string) => (fd.get(name) ? "Yes" : "No");
+
+    body["understands_no_recordings"] = ck("understands_no_recordings");
+    body["respects_participants"] = ck("respects_participants");
+    body["not_share_materials"] = ck("not_share_materials");
+    body["accepts_no_job_guarantee"] = ck("accepts_no_job_guarantee");
+    body["final_declaration"] = ck("final_declaration");
+
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to submit");
+      setMsg("✅ Registration received! Check your email for updates.");
+      (e.currentTarget as HTMLFormElement).reset();
+      setRole("");
+      setCertAttempted("No");
+      setCloudExposure("No");
+      setSponsor("No");
+    } catch (err: any) {
+      setMsg(`❌ ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-indigo-100 text-gray-800">
       {/* Header */}
-      {/* Header */}
-<header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg shadow-md">
-  <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-    
-    {/* Logo on left with link to Home */}
-    <Link href="/" className="flex-shrink-0">
-      <Image
-        src="/technexus_logo.png"
-        alt="TechNexus Logo"
-        width={200}
-        height={150}
-        className="object-contain drop-shadow-sm cursor-pointer"
-      />
-    </Link>
-
-    {/* Title in center */}
-    <h1 className="text-xl md:text-2xl font-extrabold text-indigo-700 tracking-wide text-center flex-1">
-      TechNexus: Skill-Up India Registration
-    </h1>
-
-    {/* Empty div for spacing so title stays centered */}
-    <div className="w-[160px]"></div>
-  </div>
-</header>
-
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg shadow-md">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* Logo on left with link to Home */}
+          <Link href="/" className="flex-shrink-0">
+            <Image
+              src="/technexus_logo.png"
+              alt="TechNexus Logo"
+              width={200}
+              height={150}
+              className="object-contain drop-shadow-sm cursor-pointer"
+            />
+          </Link>
+          {/* Title in center */}
+          <h1 className="text-xl md:text-2xl font-extrabold text-indigo-700 tracking-wide text-center flex-1">
+            TechNexus: Skill-Up India Registration
+          </h1>
+          {/* Empty div for spacing so title stays centered */}
+          <div className="w-[160px]"></div>
+        </div>
+      </header>
 
       {/* Form Section */}
       <section className="px-6 py-12 md:px-12">
-        <form className="max-w-3xl mx-auto bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-lg space-y-6">
+        <form
+          className="max-w-3xl mx-auto bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-lg space-y-6"
+          onSubmit={handleSubmit}
+        >
           {/* Full Name */}
           <div>
             <label className="block font-semibold mb-1">Full Name *</label>
             <input
+              name="full_name"
               type="text"
               required
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -55,6 +94,7 @@ export default function RegisterPage() {
           <div>
             <label className="block font-semibold mb-1">Email Address *</label>
             <input
+              name="email"
               type="email"
               required
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -67,6 +107,7 @@ export default function RegisterPage() {
               Phone Number (WhatsApp preferred) *
             </label>
             <input
+              name="phone"
               type="tel"
               required
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -77,6 +118,7 @@ export default function RegisterPage() {
           <div>
             <label className="block font-semibold mb-1">City & State *</label>
             <input
+              name="city_state"
               type="text"
               required
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -89,6 +131,7 @@ export default function RegisterPage() {
               LinkedIn Profile URL *
             </label>
             <input
+              name="linkedin_url"
               type="url"
               required
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -99,6 +142,7 @@ export default function RegisterPage() {
           <div>
             <label className="block font-semibold mb-1">Occupation/Role *</label>
             <select
+              name="role"
               required
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
               value={role}
@@ -115,18 +159,21 @@ export default function RegisterPage() {
             {role === "Student" && (
               <div className="mt-3 space-y-3">
                 <input
+                  name="degree_name"
                   type="text"
                   placeholder="Degree Name (e.g., B.Tech, B.Sc)"
                   required
                   className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
+                  name="branch"
                   type="text"
                   placeholder="Branch (e.g., CSE, ECE)"
                   required
                   className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
+                  name="study_year"
                   type="text"
                   placeholder="Year of Study (e.g., 3rd Year)"
                   required
@@ -138,12 +185,14 @@ export default function RegisterPage() {
             {role === "Working Professional" && (
               <div className="mt-3 space-y-3">
                 <input
+                  name="company_name"
                   type="text"
                   placeholder="Company Name"
                   required
                   className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
+                  name="company_role"
                   type="text"
                   placeholder="Role in the Company"
                   required
@@ -154,6 +203,7 @@ export default function RegisterPage() {
 
             {role === "Other" && (
               <input
+                name="other_role"
                 type="text"
                 placeholder="Please specify"
                 className="mt-2 w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -167,6 +217,7 @@ export default function RegisterPage() {
               Why do you want to join TechNexus: Skill-Up India? *
             </label>
             <textarea
+              name="motivation"
               required
               rows={4}
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -179,6 +230,7 @@ export default function RegisterPage() {
               Have you previously attempted or earned Microsoft certifications?
             </label>
             <select
+              name="ms_cert_attempted"
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
               value={certAttempted}
               onChange={(e) => setCertAttempted(e.target.value)}
@@ -188,6 +240,7 @@ export default function RegisterPage() {
             </select>
             {certAttempted === "Yes" && (
               <input
+                name="ms_cert_details"
                 type="text"
                 placeholder="Add certification details"
                 className="mt-2 w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
@@ -201,6 +254,7 @@ export default function RegisterPage() {
               Do you have prior exposure to Cloud/AI/Data-related technologies?
             </label>
             <select
+              name="cloud_exposure"
               className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
               value={cloudExposure}
               onChange={(e) => setCloudExposure(e.target.value)}
@@ -210,44 +264,65 @@ export default function RegisterPage() {
             </select>
             {cloudExposure === "Yes" && (
               <textarea
+                name="cloud_experience"
                 placeholder="Briefly explain your experience"
                 className="mt-2 w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
               />
             )}
           </div>
 
-          {/* Yes/No Questions */}
           {[
-            "Can you commit to attending all live sessions without fail?",
-            "Will you be able to complete assignments, feedback forms, and other program tasks on time?",
-            "Will your company/college/employer sponsor or reimburse your certification exam fees?",
-            "Do you personally require financial assistance for the certification exam fees?",
-            "If awarded, do you agree that the voucher is non-transferable and only for your own use?"
-          ].map((q, i) => (
-            <div key={i}>
-              <label className="block font-semibold mb-1">{q}</label>
-              <select className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
-                onChange={(e) =>
-                  i === 2 ? setSponsor(e.target.value) : null
-                }
-              >
-                <option>No</option>
-                <option>Yes</option>
-              </select>
-              {i === 2 && sponsor === "Yes" && (
-                <p className="mt-2 text-sm text-red-600 font-medium">
-                  ⚠️ You may attend the sessions, but vouchers are reserved for
-                  individuals without financial sponsorship.
-                </p>
-              )}
-            </div>
-          ))}
+  {
+    label: "Can you commit to attending all live sessions without fail?",
+    name: "commit_all_sessions",
+  },
+  {
+    label: "Will you be able to complete assignments, feedback forms, and other program tasks on time?",
+    name: "will_complete_tasks",
+  },
+  {
+    label: "Will your company/college/employer sponsor or reimburse your certification exam fees?",
+    name: "sponsor_reimburse",
+  },
+  {
+    label: "Do you personally require financial assistance for the certification exam fees?",
+    name: "needs_financial_assistance",
+  },
+  {
+    label: "If awarded, do you agree that the voucher is non-transferable and only for your own use?",
+    name: "voucher_non_transferable",
+  },
+].map((q, i) => (
+  <div key={i}>
+    <label className="block font-semibold mb-1">{q.label}</label>
+    <select
+      name={q.name}
+      className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+      onChange={i === 2 ? (e) => setSponsor(e.target.value) : undefined}
+    >
+      <option>No</option>
+      <option>Yes</option>
+    </select>
+    {i === 2 && sponsor === "Yes" && (
+      <p className="mt-2 text-sm text-red-600 font-medium">
+        ⚠️ You may attend the sessions, but vouchers are reserved for
+        individuals without financial sponsorship.
+      </p>
+    )}
+  </div>
+))}
+
 
           {/* Agreement Checkboxes */}
           <div className="space-y-2">
             <h1>I agree to </h1>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" required className="w-4 h-4" />
+              <input
+                type="checkbox"
+                name="understands_no_recordings"
+                required
+                className="w-4 h-4"
+              />
               <span>
                 I understand sessions will not be recorded, and missing even one
                 makes me ineligible for vouchers.
@@ -255,18 +330,33 @@ export default function RegisterPage() {
             </label>
 
             <label className="flex items-center space-x-2">
-              <input type="checkbox" required className="w-4 h-4" />
+              <input
+                type="checkbox"
+                name="respects_participants"
+                required
+                className="w-4 h-4"
+              />
               <span>Be respectful to speakers and participants.</span>
             </label>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" required className="w-4 h-4" />
+              <input
+                type="checkbox"
+                name="not_share_materials"
+                required
+                className="w-4 h-4"
+              />
               <span>
                 Not share slides or content outside the program without
                 permission.
               </span>
             </label>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" required className="w-4 h-4" />
+              <input
+                type="checkbox"
+                name="accepts_no_job_guarantee"
+                required
+                className="w-4 h-4"
+              />
               <span>
                 Accept that this program does not guarantee a job/internship.
               </span>
@@ -278,7 +368,10 @@ export default function RegisterPage() {
             <label className="block font-semibold mb-1">
               How did you hear about TechNexus: Skill-Up India?
             </label>
-            <select className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+            <select
+              name="referral"
+              className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+            >
               <option>LinkedIn</option>
               <option>Community/College</option>
               <option>Friend/Colleague</option>
@@ -289,7 +382,12 @@ export default function RegisterPage() {
           {/* Final Declaration */}
           <div>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" required className="w-7 h-7" />
+              <input
+                type="checkbox"
+                name="final_declaration"
+                required
+                className="w-7 h-7"
+              />
               <span className="font-semibold">
                 I confirm that the information I provide is true. I understand
                 that providing false or misleading details may result in
@@ -299,15 +397,21 @@ export default function RegisterPage() {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center">
             <button
               type="submit"
+              disabled={submitting}
               className="mt-6 px-10 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
                          text-white rounded-2xl text-lg font-semibold shadow-lg 
-                         hover:scale-110 hover:shadow-2xl transition-transform duration-300 animate-pulse"
+                         hover:scale-110 hover:shadow-2xl transition-transform duration-300 animate-pulse disabled:opacity-60"
             >
-              🚀 Submit Registration
+              {submitting ? "Submitting..." : "🚀 Submit Registration"}
             </button>
+            {msg && (
+              <p className="mt-4 text-center text-lg font-semibold">
+                {msg}
+              </p>
+            )}
           </div>
         </form>
       </section>
