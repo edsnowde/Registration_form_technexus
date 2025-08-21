@@ -1,7 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 
-BUILT A REGISTRATION FORM USING NEXT.JS FRAMEWORK
+BUILT A REGISTRATION FORM USING NEXT.JS FRAMEWORK and connected with supabase database and deployed it with vercel 
+
+https://registration-form-technexus-95y4tusv8-edsnowdes-projects.vercel.app/register
+
+basically i did this because to learn how these tools work
 
 
 ## Getting Started
