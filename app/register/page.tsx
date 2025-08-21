@@ -37,7 +37,9 @@ export default function RegisterPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to submit");
       setMsg("✅ Registration received! Check your email for updates.");
-      (e.currentTarget as HTMLFormElement).reset();
+      if (e.currentTarget) {
+        e.currentTarget.reset();
+      }
       setRole("");
       setCertAttempted("No");
       setCloudExposure("No");
