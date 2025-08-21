@@ -1,4 +1,3 @@
-
 //Make an API endpoint to receive form submissions
 
 import { NextResponse } from "next/server";
@@ -23,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     // Map booleans (incoming strings like "Yes"/"No" -> boolean)
-    const yn = (v: any) => (typeof v === "string" ? v === "Yes" : !!v);
+    const yn = (v: unknown) => (typeof v === "string" ? v === "Yes" : !!v);
 
     const payload = {
       full_name: body.full_name,
@@ -70,14 +69,19 @@ export async function POST(req: Request) {
 
     if (error) {
       // Handle unique email constraint (Postgres code 23505)
-      const msg = (error as any)?.code === "23505"
+      const errObj = error as { code?: string; message: string };
+      const msg = errObj?.code === "23505"
         ? "This email is already registered."
-        : error.message;
+        : errObj.message;
       return NextResponse.json({ ok:false, error: msg }, { status: 400 });
     }
 
     return NextResponse.json({ ok:true, id: data.id }, { status: 201 });
-  } catch (e: any) {
-    return NextResponse.json({ ok:false, error: e?.message ?? "Unknown error" }, { status: 500 });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      return NextResponse.json({ ok:false, error: `❌ ${err.message}` }, { status: 500 });
+    } else {
+      return NextResponse.json({ ok:false, error: "❌ An unknown error occurred." }, { status: 500 });
+    }
   }
 }

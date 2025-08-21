@@ -17,7 +17,7 @@ export default function RegisterPage() {
     setSubmitting(true);
 
     const fd = new FormData(e.currentTarget);
-    const body: Record<string, any> = Object.fromEntries(fd.entries());
+    const body: Record<string, unknown> = Object.fromEntries(fd.entries());
 
     // Derive booleans that were expressed as Yes/No or checkboxes
     const ck = (name: string) => (fd.get(name) ? "Yes" : "No");
@@ -42,8 +42,12 @@ export default function RegisterPage() {
       setCertAttempted("No");
       setCloudExposure("No");
       setSponsor("No");
-    } catch (err: any) {
-      setMsg(`❌ ${err.message}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setMsg(`❌ ${err.message}`);
+      } else {
+        setMsg("❌ An unknown error occurred.");
+      }
     } finally {
       setSubmitting(false);
     }
